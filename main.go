@@ -4,16 +4,9 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/amisini/scraping_portals/portals"
 	"github.com/gocolly/colly"
 )
-
-type Article struct {
-	ArticleTitle   string
-	URL            string
-	ArticleContent string
-	Category       int8
-	ArticleImage   string
-}
 
 func main() {
 
@@ -26,7 +19,7 @@ func main() {
 
 	detailCollector := c.Clone()
 
-	allArticles := []Article{}
+	allArticles := []portals.Article{}
 
 	c.OnRequest(func(r *colly.Request) {
 		fmt.Println("Visiting: ", r.URL.String())
@@ -43,7 +36,7 @@ func main() {
 
 	detailCollector.OnHTML(`div.article-container`, func(e *colly.HTMLElement) {
 		fmt.Println("Scraping Content ", e.Request.URL.String())
-		article := Article{}
+		article := portals.Article{}
 		article.URL = e.Request.URL.String()
 		article.ArticleTitle = e.ChildText("h1")
 		article.ArticleContent = e.ChildText("div.article-body")
@@ -61,11 +54,15 @@ func main() {
 		}
 
 		if article.Category = GetCategory(categories, category); article.Category == 0 {
-			fmt.Println("Not Wanted: ", category)
 			return
 		}
 
-		fmt.Println("Found: ", article.Category)
+		if err := article.Save(); err != nil {
+			fmt.Println("DB save error: ", err)
+		}
+		if err := article.SaveAPI(); err != nil {
+			fmt.Println("Api save error: ", err)
+		}
 		allArticles = append(allArticles, article)
 	})
 
