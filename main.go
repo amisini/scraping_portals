@@ -6,6 +6,7 @@ import (
 
 	"github.com/amisini/scraping_portals/portals"
 	"github.com/gocolly/colly"
+	"github.com/microcosm-cc/bluemonday"
 )
 
 func main() {
@@ -19,13 +20,11 @@ func main() {
 
 	detailCollector := c.Clone()
 
-	allArticles := []portals.Article{}
-
 	c.OnRequest(func(r *colly.Request) {
 		fmt.Println("Visiting: ", r.URL.String())
 	})
 
-	c.OnHTML(`a[href]`, func(e *colly.HTMLElement) {
+	c.OnHTML("div.aktuale-widget a[href]", func(e *colly.HTMLElement) {
 		foundURL := e.Request.AbsoluteURL(e.Attr("href"))
 		if strings.Contains(foundURL, "category") {
 			return
@@ -34,12 +33,17 @@ func main() {
 		detailCollector.Visit(foundURL)
 	})
 
-	detailCollector.OnHTML(`div.article-container`, func(e *colly.HTMLElement) {
+	detailCollector.OnHTML("div.article-container", func(e *colly.HTMLElement) {
 		fmt.Println("Scraping Content ", e.Request.URL.String())
 		article := portals.Article{}
+		article.PortalID = 1
 		article.URL = e.Request.URL.String()
 		article.ArticleTitle = e.ChildText("h1")
-		article.ArticleContent = e.ChildText("div.article-body")
+
+		content, _ := e.DOM.Find("div.article-body").Html()
+		p := bluemonday.UGCPolicy()
+		article.ArticleContent = p.Sanitize(content)
+		// article.ArticleContent, _ = e.DOM.Find("div.article-body").Html()
 		category := e.ChildText("a.article-category")
 		article.ArticleImage = e.ChildAttr("div.featured-image > figure > img", "src")
 
@@ -59,14 +63,20 @@ func main() {
 
 		if err := article.Save(); err != nil {
 			fmt.Println("DB save error: ", err)
+			return
 		}
 		if err := article.SaveAPI(); err != nil {
 			fmt.Println("Api save error: ", err)
+			return
 		}
-		allArticles = append(allArticles, article)
 	})
 
-	c.Visit("https://telegrafi.com/")
+	c.Visit("https://telegrafi.com/lajme/")
+	c.Visit("https://telegrafi.com/sport/")
+	c.Visit("https://telegrafi.com/magazina/")
+	c.Visit("https://telegrafi.com/shendetesi/")
+	c.Visit("https://telegrafi.com/teknologji/")
+	c.Visit("https://telegrafi.com/fun/")
 }
 
 func GetCategory(categories map[string]int8, cat string) int8 {

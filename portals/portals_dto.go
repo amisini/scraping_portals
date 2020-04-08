@@ -31,6 +31,7 @@ type ApiField struct {
 }
 
 type Article struct {
+	PortalID       int8
 	ArticleTitle   string
 	URL            string
 	ArticleContent string

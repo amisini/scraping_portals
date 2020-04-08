@@ -27,7 +27,8 @@ func (article *Article) Save() error {
 	}
 	defer stmt.Close()
 
-	insertResult, err := stmt.Exec(1,
+	insertResult, err := stmt.Exec(
+		article.PortalID,
 		article.Category,
 		article.ArticleTitle,
 		article.ArticleContent,
