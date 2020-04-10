@@ -12,7 +12,7 @@ import (
 	"github.com/amisini/scraping_portals/file_utils"
 )
 
-func (article *Article) SaveAPI() error {
+func (article *Article) SaveAPI(portalCredentials string) error {
 	fileUrl := article.ArticleImage
 	segments := strings.Split(fileUrl, "/")
 	fileName := segments[len(segments)-1]
@@ -22,6 +22,8 @@ func (article *Article) SaveAPI() error {
 	if err := file_utils.DownloadFile(fileSave, fileUrl); err != nil {
 		return err
 	}
+
+	api_user, api_password := GetPortalCredentials(portalCredentials)
 
 	reqImg, err := file_utils.NewfileUploadRequest(api_img_url, "file", fileSave)
 	if err != nil {
