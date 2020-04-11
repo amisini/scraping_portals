@@ -6,20 +6,22 @@ import (
 	"strings"
 
 	"github.com/gocolly/colly"
-	"github.com/microcosm-cc/bluemonday"
+	"github.com/gocolly/colly/queue"
 )
 
 func GazetaExpress() {
 
 	c := colly.NewCollector(
 		colly.AllowedDomains("gazetaexpress.com", "www.gazetaexpress.com"),
-		colly.UserAgent(userAgent),
-		// Cache responses to prevent multiple download of pages
-		// even if the collector is restarted
 		colly.CacheDir("./gazetaexpress_cache"),
 	)
 
 	detailCollector := c.Clone()
+
+	q, _ := queue.New(
+		4, // Number of consumer threads
+		&queue.InMemoryQueueStorage{MaxSize: 10000}, // Use default queue storage
+	)
 
 	c.OnRequest(func(r *colly.Request) {
 		fmt.Println("Visiting: ", r.URL.String())
@@ -43,10 +45,11 @@ func GazetaExpress() {
 
 		content, _ := e.DOM.Html()
 		m1 := regexp.MustCompile(`(?s)(<h2.*?</div>)`)
-		myContent := m1.ReplaceAllString(content, "")
+		removeHeader := m1.ReplaceAllString(content, "")
+		m2 := regexp.MustCompile(`(?s)(<ins.*?</script>)`)
+		myContent := m2.ReplaceAllString(removeHeader, "")
 
-		p := bluemonday.UGCPolicy()
-		article.ArticleContent = p.Sanitize(myContent)
+		article.ArticleContent = myContent
 
 		category := e.ChildText("div.single__author h2")
 		article.ArticleImage = e.ChildAttr("figure > img", "src")
@@ -57,7 +60,6 @@ func GazetaExpress() {
 
 		if err := article.Save(); err != nil {
 			fmt.Println("DB save error: ", err)
-			return
 		}
 		if err := article.SaveAPI("gazetaexpress"); err != nil {
 			fmt.Println("Api save error: ", err)
@@ -65,8 +67,10 @@ func GazetaExpress() {
 		}
 	})
 
-	c.Visit("https://www.gazetaexpress.com/lajme/")
-	c.Visit("https://www.gazetaexpress.com/sport/")
-	c.Visit("https://www.gazetaexpress.com/roze/")
-	c.Visit("https://www.gazetaexpress.com/shneta/")
+	q.AddURL("https://www.gazetaexpress.com/lajme/")
+	q.AddURL("https://www.gazetaexpress.com/sport/")
+	q.AddURL("https://www.gazetaexpress.com/roze/")
+	q.AddURL("https://www.gazetaexpress.com/shneta/")
+	q.Run(c)
+
 }

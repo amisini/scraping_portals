@@ -2,10 +2,11 @@ package portals
 
 import (
 	"fmt"
+	"regexp"
 	"strings"
 
 	"github.com/gocolly/colly"
-	"github.com/microcosm-cc/bluemonday"
+	"github.com/gocolly/colly/queue"
 )
 
 func Telegrafi() {
@@ -17,6 +18,11 @@ func Telegrafi() {
 	)
 
 	detailCollector := c.Clone()
+
+	q, _ := queue.New(
+		6, // Number of consumer threads
+		&queue.InMemoryQueueStorage{MaxSize: 10000}, // Use default queue storage
+	)
 
 	c.OnRequest(func(r *colly.Request) {
 		fmt.Println("Visiting: ", r.URL.String())
@@ -39,8 +45,8 @@ func Telegrafi() {
 		article.ArticleTitle = e.ChildText("h1")
 
 		content, _ := e.DOM.Find("div.article-body").Html()
-		p := bluemonday.UGCPolicy()
-		article.ArticleContent = p.Sanitize(content)
+		m1 := regexp.MustCompile(`(?s)(<iframe sandbox=".*?</iframe>)`)
+		article.ArticleContent = m1.ReplaceAllString(content, "")
 
 		category := e.ChildText("a.article-category")
 		article.ArticleImage = e.ChildAttr("div.featured-image > figure > img", "src")
@@ -51,7 +57,6 @@ func Telegrafi() {
 
 		if err := article.Save(); err != nil {
 			fmt.Println("DB save error: ", err)
-			return
 		}
 		if err := article.SaveAPI("telegrafi"); err != nil {
 			fmt.Println("Api save error: ", err)
@@ -59,10 +64,11 @@ func Telegrafi() {
 		}
 	})
 
-	c.Visit("https://telegrafi.com/lajme/")
-	c.Visit("https://telegrafi.com/sport/")
-	c.Visit("https://telegrafi.com/magazina/")
-	c.Visit("https://telegrafi.com/shendetesi/")
-	c.Visit("https://telegrafi.com/teknologji/")
-	c.Visit("https://telegrafi.com/fun/")
+	q.AddURL("https://telegrafi.com/lajme/")
+	q.AddURL("https://telegrafi.com/sport/")
+	q.AddURL("https://telegrafi.com/magazina/")
+	q.AddURL("https://telegrafi.com/shendetesi/")
+	q.AddURL("https://telegrafi.com/teknologji/")
+	q.AddURL("https://telegrafi.com/fun/")
+	q.Run(c)
 }
