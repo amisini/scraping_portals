@@ -7,28 +7,38 @@ import (
 
 	"github.com/gocolly/colly"
 	"github.com/gocolly/colly/queue"
+	"github.com/velebak/colly-sqlite3-storage/colly/sqlite3"
 )
 
 func Telegrafi() {
 	c := colly.NewCollector(
 		colly.AllowedDomains("telegrafi.com"),
-		// Cache responses to prevent multiple download of pages
-		// even if the collector is restarted
-		colly.CacheDir("./telegrafi_cache"),
 	)
+
+	storage := &sqlite3.Storage{
+		Filename: "./results.db",
+	}
+
+	defer storage.Close()
 
 	detailCollector := c.Clone()
 
+	err := detailCollector.SetStorage(storage)
+
+	if err != nil {
+		panic(err)
+	}
+
 	q, _ := queue.New(
 		6, // Number of consumer threads
-		&queue.InMemoryQueueStorage{MaxSize: 10000}, // Use default queue storage
+		storage, // Use sqlite queue storage
 	)
 
 	c.OnRequest(func(r *colly.Request) {
 		fmt.Println("Visiting: ", r.URL.String())
 	})
 
-	c.OnHTML("div.aktuale-widget a[href]", func(e *colly.HTMLElement) {
+	c.OnHTML("a[href]", func(e *colly.HTMLElement) {
 		foundURL := e.Request.AbsoluteURL(e.Attr("href"))
 		if strings.Contains(foundURL, "category") {
 			return

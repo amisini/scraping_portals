@@ -15,4 +15,4 @@
 # vendor/
 
 #Cache folders
-*_cache
+*.db
