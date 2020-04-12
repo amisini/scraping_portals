@@ -12,6 +12,8 @@ const (
 	api_telegrafi_post_password     = "api_telegrafi_post_password"
 	api_gazetaexpress_post_user     = "api_gazetaexpress_post_user"
 	api_gazetaexpress_post_password = "api_gazetaexpress_post_password"
+	api_indeksonline_post_user      = "api_indeksonline_post_user"
+	api_indeksonline_post_password  = "api_indeksonline_post_password"
 )
 
 var (
@@ -22,7 +24,11 @@ var (
 
 	api_gazetaexpress_user     = os.Getenv(api_gazetaexpress_post_user)
 	api_gazetaexpress_password = os.Getenv(api_gazetaexpress_post_password)
-	userAgent                  = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Ubuntu Chromium/80.0.3987.149 Chrome/80.0.3987.149 Safari/537.36"
+
+	api_indeksonline_user     = os.Getenv(api_indeksonline_post_user)
+	api_indeksonline_password = os.Getenv(api_indeksonline_post_password)
+
+	userAgent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Ubuntu Chromium/80.0.3987.149 Chrome/80.0.3987.149 Safari/537.36"
 )
 
 type ImgId struct {
@@ -48,16 +54,19 @@ type Article struct {
 }
 
 var categories = map[string]int8{
-	"lajme":      1,
-	"sport":      2,
-	"magazina":   3,
-	"roz":        3,
-	"teknologji": 4,
-	"tech":       4,
-	"fun":        5,
-	"shendetesi": 6,
-	"shneta":     6,
-	"ekonomi":    7,
+	"lajme":       1,
+	"sport":       2,
+	"magazina":    3,
+	"showbiz":     3,
+	"roz":         3,
+	"teknologji":  4,
+	"tech":        4,
+	"fun":         5,
+	"kuriozitete": 5,
+	"shendetesi":  6,
+	"shëndetësi":  6,
+	"shneta":      6,
+	"ekonomi":     7,
 }
 
 func GetCategory(categories map[string]int8, cat string) int8 {
@@ -70,10 +79,14 @@ func GetCategory(categories map[string]int8, cat string) int8 {
 }
 
 func GetPortalCredentials(cred string) (string, string) {
-	if cred == "telegrafi" {
+	switch cred {
+	case "telegrafi":
 		return api_telegrafi_user, api_telgrafi_password
-	} else if cred == "gazetaexpress" {
+	case "gazetaexpress":
 		return api_gazetaexpress_user, api_gazetaexpress_password
+	case "indeksonline":
+		return api_indeksonline_user, api_indeksonline_password
+	default:
+		return "", ""
 	}
-	return "", ""
 }

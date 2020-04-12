@@ -20,8 +20,10 @@ func main() {
 		portals.Telegrafi()
 	case "gazetaexpress":
 		portals.GazetaExpress()
+	case "indeksonline":
+		portals.IndeksOnline()
 	default:
-		fmt.Println("Please set a portal")
+		fmt.Println("Wrong portal")
 	}
 
 }

@@ -10,9 +10,10 @@ import (
 	"github.com/velebak/colly-sqlite3-storage/colly/sqlite3"
 )
 
-func Telegrafi() {
+func IndeksOnline() {
+
 	c := colly.NewCollector(
-		colly.AllowedDomains("telegrafi.com"),
+		colly.AllowedDomains("indeksonline.net"),
 	)
 
 	storage := &sqlite3.Storage{
@@ -38,7 +39,7 @@ func Telegrafi() {
 		fmt.Println("Visiting: ", r.URL.String())
 	})
 
-	c.OnHTML("a[href]", func(e *colly.HTMLElement) {
+	c.OnHTML("div.container a[href]", func(e *colly.HTMLElement) {
 		foundURL := e.Request.AbsoluteURL(e.Attr("href"))
 		if strings.Contains(foundURL, "category") {
 			return
@@ -47,19 +48,23 @@ func Telegrafi() {
 		detailCollector.Visit(foundURL)
 	})
 
-	detailCollector.OnHTML("div.article-container", func(e *colly.HTMLElement) {
+	detailCollector.OnHTML("div.container", func(e *colly.HTMLElement) {
 		fmt.Println("Scraping Content ", e.Request.URL.String())
 		article := Article{}
-		article.PortalID = 1
+		article.PortalID = 3
 		article.URL = e.Request.URL.String()
-		article.ArticleTitle = e.ChildText("h1")
+		article.ArticleTitle = e.ChildText("h1.title")
 
-		content, _ := e.DOM.Find("div.article-body").Html()
-		m1 := regexp.MustCompile(`(?s)(<iframe sandbox=".*?</iframe>)`)
+		content, _ := e.DOM.Find("div.full-text").Html()
+		m1 := regexp.MustCompile(`(?s)(<ins.*?</script>)`)
+
 		article.ArticleContent = m1.ReplaceAllString(content, "")
 
-		category := e.ChildText("a.article-category")
-		article.ArticleImage = e.ChildAttr("div.featured-image > figure > img", "src")
+		indekscat := e.ChildText("h3.tab_title")
+		cat := strings.Fields(indekscat)
+
+		category := cat[len(cat)-1]
+		article.ArticleImage = e.ChildAttr("div.full-img > img", "src")
 
 		if article.Category = GetCategory(categories, category); article.Category == 0 {
 			return
@@ -68,18 +73,18 @@ func Telegrafi() {
 		if err := article.Save(); err != nil {
 			fmt.Println("DB save error: ", err)
 		}
-		if err := article.SaveAPI("telegrafi"); err != nil {
+		if err := article.SaveAPI("indeksonline"); err != nil {
 			fmt.Println("Api save error: ", err)
 			return
 		}
 	})
 
-	q.AddURL("https://telegrafi.com/lajme/")
-	q.AddURL("https://telegrafi.com/sport/")
-	q.AddURL("https://telegrafi.com/magazina/")
-	q.AddURL("https://telegrafi.com/shendetesi/")
-	q.AddURL("https://telegrafi.com/teknologji/")
-	q.AddURL("https://telegrafi.com/fun/")
-	q.AddURL("https://telegrafi.com/ekonomi/")
+	q.AddURL("https://indeksonline.net/lajme/")
+	q.AddURL("https://indeksonline.net/sport/")
+	q.AddURL("https://indeksonline.net/showbiz/")
+	q.AddURL("https://indeksonline.net/tech/")
+	q.AddURL("https://indeksonline.net/kuriozitete/")
+	q.AddURL("https://indeksonline.net/shendetesi/")
+	q.AddURL("https://indeksonline.net/ekonomi/")
 	q.Run(c)
 }

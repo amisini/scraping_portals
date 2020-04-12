@@ -31,7 +31,7 @@ func GazetaExpress() {
 	}
 
 	q, _ := queue.New(
-		4, // Number of consumer threads
+		4,       // Number of consumer threads
 		storage, // Use sqlite queue storage
 	)
 
@@ -51,7 +51,7 @@ func GazetaExpress() {
 	detailCollector.OnHTML("div.single__content", func(e *colly.HTMLElement) {
 		fmt.Println("Scraping Content ", e.Request.URL.String())
 		article := Article{}
-		article.PortalID = 1
+		article.PortalID = 2
 		article.URL = e.Request.URL.String()
 		article.ArticleTitle = e.ChildText("h2.single__title")
 
