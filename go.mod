@@ -16,5 +16,6 @@ require (
 	github.com/saintfish/chardet v0.0.0-20120816061221-3af4cd4741ca // indirect
 	github.com/temoto/robotstxt v1.1.1 // indirect
 	github.com/velebak/colly-sqlite3-storage v0.0.0-20190425160637-c76683d5163d
+	golang.org/x/net v0.0.0-20200226121028-0de0cce0169b // indirect
 	google.golang.org/appengine v1.6.5 // indirect
 )
