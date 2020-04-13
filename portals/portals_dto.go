@@ -61,7 +61,6 @@ var categories = map[string]int8{
 	"roz":         3,
 	"teknologji":  4,
 	"tech":        4,
-	"fun":         5,
 	"kuriozitete": 5,
 	"shendetesi":  6,
 	"shëndetësi":  6,

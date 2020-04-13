@@ -60,10 +60,7 @@ func IndeksOnline() {
 
 		article.ArticleContent = m1.ReplaceAllString(content, "")
 
-		indekscat := e.ChildText("h3.tab_title")
-		cat := strings.Fields(indekscat)
-
-		category := cat[len(cat)-1]
+		category := e.ChildText("div:nth-child(5) > h3")
 		article.ArticleImage = e.ChildAttr("div.full-img > img", "src")
 
 		if article.Category = GetCategory(categories, category); article.Category == 0 {
