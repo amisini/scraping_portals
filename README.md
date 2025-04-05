@@ -15,7 +15,7 @@ A Go application for scraping news articles from local news portals using Go and
 
 ## Prerequisites
 
-- Go 1.21 or higher
+- Go 1.14 or higher
 - MySQL database
 - Required environment variables set up for API and database access
 
